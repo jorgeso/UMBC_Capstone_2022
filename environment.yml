@@ -4,7 +4,9 @@ channels:
   - defaults
 dependencies:
   - cudatoolkit=11.3.1
+  - ipywidgets=7.7.0
   - matplotlib=3.5.1
+  - nltk=3.5
   - notebook=6.4.8
   - numpy=1.21.2
   - pandas=1.4.1
@@ -14,3 +16,5 @@ dependencies:
   - seaborn=0.11.2
   - torchaudio=0.11.0
   - torchvision=0.12.0
+  - pip:
+    - transformer==4.11.3

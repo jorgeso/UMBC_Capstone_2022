@@ -17,4 +17,6 @@ dependencies:
   - torchaudio=0.11.0
   - torchvision=0.12.0
   - pip:
-    - transformer==4.11.3
+    - transformers==4.11.3
+    - yfinance==0.1.70
+    - nltk==3.7

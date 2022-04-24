@@ -6,12 +6,14 @@ from transformers import BertConfig, BertModel, BertTokenizer
 from sentence_transformers import SentenceTransformer
 import numpy as np
 import pandas as pd
+import pathlib
 
 class NewsDataset(torch.utils.data.Dataset):
     def __init__(
         self,
         model_name="bert-base-cased",
-        split='train'
+        split='train',
+        prefix=''
     ):
         self._device = "cuda:0" if torch.cuda.is_available() else "cpu"
         # self._config = BertConfig.from_pretrained(model_name)
@@ -19,7 +21,8 @@ class NewsDataset(torch.utils.data.Dataset):
         # self._bert_model.eval()
         # self._bert_tokenizer = BertTokenizer.from_pretrained(model_name, do_lower_case=True)
         self._bert_model = SentenceTransformer('all-mpnet-base-v2')
-        self._data_df = pd.read_csv(f"../data/{split}_data.csv", index_col="Date")
+        current_dir = pathlib.Path(__file__).parent.resolve()
+        self._data_df = pd.read_csv(f"{current_dir}/../data/{prefix}{split}_data.csv", index_col=0)
 
     def __len__(self):
         return len(self._data_df.index)
@@ -28,8 +31,7 @@ class NewsDataset(torch.utils.data.Dataset):
         row = self._data_df.iloc[index]
         label = row[-1]
         text_series = row[:-3]
-        nan_count = text_series.isna().sum()
-        day_text_matrix = np.empty((text_series.size - nan_count, 768))
+        day_text_matrix = np.zeros((text_series.size, 768))
         # self._bert_model = self._bert_model.to(self._device)
         for index, text in enumerate(text_series):
             if isinstance(text, str):

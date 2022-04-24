@@ -4,7 +4,14 @@ from torch import nn, optim
 from torch.utils.data import DataLoader
 from sklearn.metrics import accuracy_score
 
-def train(train_dataset, val_dataset, model, device, batch_size=32, max_epochs=1):
+def train(
+    train_dataset,
+    val_dataset,
+    model,
+    device,
+    batch_size=32,
+    max_epochs=1
+):
     model.to(device)
 
     train_dataloader = DataLoader(

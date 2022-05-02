@@ -18,7 +18,7 @@ if __name__ == '__main__':
     # Initialize parser
     parser = argparse.ArgumentParser()
     parser.add_argument("-P", "--plot", type=str, default="plot", help="name of plot file")
-    parser.add_argument("-A", "--attention", type=bool, default="plot", help="true or false to add attention layer")
+    parser.add_argument("-A", "--attention", type=bool, default="False", help="true or false to add attention layer")
     parser.add_argument("-B", "--batch", type=int, default=32, help="batch size")
     parser.add_argument("-E", "--epochs", type=int, default=75, help="max number of epochs")
     parser.add_argument("-H", "--hidden_size", type=int, default=384, help="LSTM layer output size")

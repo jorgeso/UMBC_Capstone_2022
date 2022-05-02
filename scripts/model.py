@@ -18,6 +18,8 @@ class Model(nn.Module):
         else:
             self.dropout = 0
 
+        self.lin = nn.Linear(self.lstm_size, 1)
+
         self.lstm = nn.LSTM(
             input_size=self.lstm_size,
             hidden_size=self.hidden_size,
@@ -28,8 +30,11 @@ class Model(nn.Module):
         self.fc = nn.Linear(self.hidden_size, 1)
 
     def forward(self, x):
-        h0, c0 = self.init_hidden(x.size(0))
-        output, state = self.lstm(x, (h0, c0))
+        weights = self.lin(x)
+        weights_normalized = torch.softmax(weights, 1)
+        lstm_input = torch.mul(weights_normalized, x)
+        h0, c0 = self.init_hidden(lstm_input.size(0))
+        output, state = self.lstm(lstm_input, (h0, c0))
         output = self.fc(output[:, -1, :])
         output = torch.sigmoid(output)
         return output, state

@@ -1,10 +1,14 @@
 import torch
+torch.manual_seed(42)
+import random
+random.seed(42)
+import numpy as np
+np.random.seed(42)
 import nltk
 nltk.download('punkt')
 from nltk.tokenize import word_tokenize
 from transformers import BertConfig, BertModel, BertTokenizer
 from sentence_transformers import SentenceTransformer
-import numpy as np
 import pandas as pd
 import pathlib
 

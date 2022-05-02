@@ -1,5 +1,9 @@
 import torch
+torch.manual_seed(42)
+import random
+random.seed(42)
 import numpy as np
+np.random.seed(42)
 from torch import nn, optim
 from torch.utils.data import DataLoader
 from sklearn.metrics import accuracy_score

@@ -1,5 +1,10 @@
-import argparse
 import torch
+torch.manual_seed(42)
+import random
+random.seed(42)
+import numpy as np
+np.random.seed(42)
+import argparse
 from scripts.datasets import NewsDataset
 from scripts.model import Model
 from scripts.training import train
@@ -7,7 +12,6 @@ import seaborn as sns
 import pandas as pd
 import matplotlib.pyplot as plt
 import pathlib
-import torch
  
 if __name__ == '__main__':
  

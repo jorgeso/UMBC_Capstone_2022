@@ -34,7 +34,7 @@ class NewsDataset(torch.utils.data.Dataset):
     def __getitem__(self, index):
         row = self._data_df.iloc[index]
         label = row[-1]
-        text_series = row[:-3]
+        text_series = row[:-1]
         day_text_matrix = np.zeros((text_series.size, 768))
         # self._bert_model = self._bert_model.to(self._device)
         for index, text in enumerate(text_series):

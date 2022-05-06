@@ -18,7 +18,13 @@ class Model(nn.Module):
         else:
             self.dropout = 0
 
-        self.lin = nn.Linear(self.lstm_size, 1)
+        self.lin_0 = nn.Linear(self.lstm_size, (self.lstm_size//4)*3)
+        self.non_lin_1 = nn.ReLU()
+        self.lin_1 = nn.Linear((self.lstm_size//4)*3, self.lstm_size//2)
+        self.non_lin_2 = nn.ReLU()
+        self.lin_2 = nn.Linear(self.lstm_size//2, self.lstm_size//4)
+        self.non_lin_3 = nn.ReLU()
+        self.lin_3 = nn.Linear(self.lstm_size//4, 1)
 
         self.lstm = nn.LSTM(
             input_size=self.lstm_size,
@@ -27,15 +33,33 @@ class Model(nn.Module):
             dropout=self.dropout,
             batch_first=True
         )
-        self.fc = nn.Linear(self.hidden_size, 1)
+        self.fc_0 = nn.Linear(self.hidden_size, (self.hidden_size//4)*3)
+        self.non_lin_4 = nn.ReLU()
+        self.fc_1 = nn.Linear((self.hidden_size//4)*3, self.hidden_size//2)
+        self.non_lin_5 = nn.ReLU()
+        self.fc_2 = nn.Linear(self.hidden_size//2, self.hidden_size//4)
+        self.non_lin_6 = nn.ReLU()
+        self.fc_3 = nn.Linear(self.hidden_size//4, 1)
 
     def forward(self, x):
-        weights = self.lin(x)
+        weights = self.lin_0(x)
+        weights = self.non_lin_1(weights)
+        weights = self.lin_1(weights)
+        weights = self.non_lin_2(weights)
+        weights = self.lin_2(weights)
+        weights = self.non_lin_3(weights)
+        weights = self.lin_3(weights)
         weights_normalized = torch.softmax(weights, 1)
         lstm_input = torch.mul(weights_normalized, x)
         h0, c0 = self.init_hidden(lstm_input.size(0))
         output, state = self.lstm(lstm_input, (h0, c0))
-        output = self.fc(output[:, -1, :])
+        output = self.fc_0(output[:, -1, :])
+        output = self.non_lin_4(output)
+        output = self.fc_1(output)
+        output = self.non_lin_5(output)
+        output = self.fc_2(output)
+        output = self.non_lin_6(output)
+        output = self.fc_3(output)
         output = torch.sigmoid(output)
         return output, state
 

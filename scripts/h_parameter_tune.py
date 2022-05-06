@@ -21,9 +21,10 @@ def process_training_trial(trial: optuna.Trial):
     hidden_size = trial.suggest_int("hidden_size", 100, 786)
     dropout = trial.suggest_float("dropout", 0.2, 0.9)
     lstm_layers = trial.suggest_int("lstm_layers", 1, 4)
+    lr = trial.suggest_float("lr", 0.0000001, 0.1)
 
-    train_dataset = NewsDataset(prefix="nyt_")
-    val_dataset = NewsDataset(split='val', prefix="nyt_")
+    train_dataset = NewsDataset(prefix="nyt_all_")
+    val_dataset = NewsDataset(split='val', prefix="nyt_all_")
     device = "cuda:0" if torch.cuda.is_available() else "cpu"
     model = Model(
         device,
@@ -38,7 +39,8 @@ def process_training_trial(trial: optuna.Trial):
         model,
         device,
         batch_size=batch_size,
-        max_epochs=80
+        max_epochs=80,
+        lr=lr
     )
     if device == "cuda:0":
         torch.cuda.empty_cache()
@@ -49,7 +51,7 @@ def process_training_trial(trial: optuna.Trial):
 
 if __name__ == '__main__':
     study = optuna.create_study(direction="maximize")
-    study.optimize(process_training_trial, n_trials=100)
+    study.optimize(process_training_trial, n_trials=50)
 
     pruned_trials = [t for t in study.trials if t.state == optuna.trial.TrialState.PRUNED]
     complete_trials = [t for t in study.trials if t.state == optuna.trial.TrialState.COMPLETE]

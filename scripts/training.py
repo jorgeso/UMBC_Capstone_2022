@@ -14,7 +14,9 @@ def train(
     model,
     device,
     batch_size=32,
-    max_epochs=1
+    max_epochs=1,
+    lr=0.01,
+    patience=5
 ):
     model.to(device)
 
@@ -24,7 +26,7 @@ def train(
     )
 
     criterion = nn.BCELoss()
-    optimizer = optim.Adam(model.parameters(), lr=0.01)
+    optimizer = optim.AdamW(model.parameters(), lr=lr)
 
     results = {
         "epoch": [],
@@ -32,6 +34,9 @@ def train(
         "train_accuracy": [],
         "val_accuracy": []
     }
+
+    last_loss = 10000.0
+    trigger_times = 0
 
     for epoch in range(max_epochs):
         results["epoch"].append(epoch)
@@ -69,7 +74,7 @@ def train(
         )
 
         val_running_accuracy = []
-
+        val_running_loss = []
         model = model.eval()
         with torch.no_grad():
 
@@ -79,6 +84,9 @@ def train(
                 y_pred, _ = model(x.float())
                 y_true = y_true.reshape((-1, 1))
 
+                val_loss = criterion(y_pred, y_true.float())
+                val_running_loss.append(val_loss.cpu().detach())
+
                 pred = np.round(y_pred.cpu().detach())
                 target = np.round(y_true.cpu().detach())
                 accuracy = accuracy_score(target, pred)
@@ -87,5 +95,21 @@ def train(
         val_accuracy = np.mean(val_running_accuracy)
         results["val_accuracy"].append(val_accuracy)
         print({ 'epoch': epoch, 'train_loss': train_loss, 'train_accuracy': train_accuracy, 'val_accuracy': val_accuracy })
+
+        val_loss = np.mean(val_running_loss)
+
+        if np.round(val_loss, 4) >= np.round(last_loss, 4):
+            trigger_times += 1
+            print('trigger times:', trigger_times)
+
+            if trigger_times >= patience:
+                print('Early stopping!')
+                return results
+
+        else:
+            print('trigger times: 0')
+            trigger_times = 0
+
+        last_loss = val_loss
 
     return results

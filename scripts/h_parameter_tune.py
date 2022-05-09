@@ -20,7 +20,7 @@ def process_training_trial(trial: optuna.Trial):
     batch_size = trial.suggest_int("batch_size", 8, 32)
     hidden_size = trial.suggest_int("hidden_size", 100, 786)
     dropout = trial.suggest_float("dropout", 0.2, 0.9)
-    lstm_layers = trial.suggest_int("lstm_layers", 1, 4)
+    lstm_layers = trial.suggest_int("lstm_layers", 1, 6)
     lr = trial.suggest_float("lr", 0.0000001, 0.1)
 
     train_dataset = NewsDataset(prefix="nyt_all_")
@@ -51,7 +51,7 @@ def process_training_trial(trial: optuna.Trial):
 
 if __name__ == '__main__':
     study = optuna.create_study(direction="maximize")
-    study.optimize(process_training_trial, n_trials=50)
+    study.optimize(process_training_trial, n_trials=100)
 
     pruned_trials = [t for t in study.trials if t.state == optuna.trial.TrialState.PRUNED]
     complete_trials = [t for t in study.trials if t.state == optuna.trial.TrialState.COMPLETE]

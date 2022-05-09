@@ -23,6 +23,7 @@ def train(
     train_dataloader = DataLoader(
         train_dataset,
         batch_size=batch_size,
+        shuffle=True
     )
 
     criterion = nn.BCELoss()
@@ -32,6 +33,7 @@ def train(
         "epoch": [],
         "train_loss": [],
         "train_accuracy": [],
+        "val_loss": [],
         "val_accuracy": []
     }
 
@@ -58,8 +60,8 @@ def train(
 
             train_running_loss.append(loss.item())
 
-            pred = np.round(y_pred.cpu().detach())
-            target = np.round(y_true.cpu().detach())
+            pred = np.round(y_pred.tolist())
+            target = np.round(y_true.tolist())
             accuracy = accuracy_score(target, pred)
             train_running_accuracy.append(accuracy)
 
@@ -71,6 +73,7 @@ def train(
         val_dataloader = DataLoader(
             val_dataset,
             batch_size=batch_size,
+            shuffle=True
         )
 
         val_running_accuracy = []
@@ -85,18 +88,18 @@ def train(
                 y_true = y_true.reshape((-1, 1))
 
                 val_loss = criterion(y_pred, y_true.float())
-                val_running_loss.append(val_loss.cpu().detach())
+                val_running_loss.append(val_loss.item())
 
-                pred = np.round(y_pred.cpu().detach())
-                target = np.round(y_true.cpu().detach())
+                pred = np.round(y_pred.tolist())
+                target = np.round(y_true.tolist())
                 accuracy = accuracy_score(target, pred)
                 val_running_accuracy.append(accuracy)
         
+        val_loss = np.mean(val_running_loss)
+        results["val_loss"].append(val_loss)
         val_accuracy = np.mean(val_running_accuracy)
         results["val_accuracy"].append(val_accuracy)
-        print({ 'epoch': epoch, 'train_loss': train_loss, 'train_accuracy': train_accuracy, 'val_accuracy': val_accuracy })
-
-        val_loss = np.mean(val_running_loss)
+        print({ 'epoch': epoch, 'train_loss': train_loss, 'val_loss': val_loss, 'train_accuracy': train_accuracy, 'val_accuracy': val_accuracy })
 
         if np.round(val_loss, 4) >= np.round(last_loss, 4):
             trigger_times += 1

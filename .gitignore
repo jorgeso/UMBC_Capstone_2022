@@ -128,4 +128,5 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
-./data/raw_nyt_articles.csv
+data
+data/

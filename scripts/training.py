@@ -16,7 +16,8 @@ def train(
     batch_size=32,
     max_epochs=1,
     lr=0.01,
-    patience=5
+    patience=5,
+    is_regression=False
 ):
     model.to(device)
 
@@ -26,16 +27,21 @@ def train(
         shuffle=True
     )
 
-    criterion = nn.BCELoss()
     optimizer = optim.AdamW(model.parameters(), lr=lr)
 
     results = {
         "epoch": [],
         "train_loss": [],
-        "train_accuracy": [],
-        "val_loss": [],
-        "val_accuracy": []
+        "val_loss": []
     }
+
+    if is_regression == False:
+        results["train_accuracy"] = []
+        results["val_accuracy"] = []
+        criterion = nn.MSELoss()
+    else:
+        criterion = nn.BCEWithLogitsLoss()
+
 
     last_loss = 10000.0
     trigger_times = 0
@@ -60,15 +66,18 @@ def train(
 
             train_running_loss.append(loss.item())
 
-            pred = np.round(y_pred.tolist())
-            target = np.round(y_true.tolist())
-            accuracy = accuracy_score(target, pred)
-            train_running_accuracy.append(accuracy)
+            if is_regression == False:
+                pred = np.round(y_pred.tolist())
+                target = np.round(y_true.tolist())
+                accuracy = accuracy_score(target, pred)
+                train_running_accuracy.append(accuracy)
 
         train_loss = np.mean(train_running_loss)
         results["train_loss"].append(train_loss)
-        train_accuracy = np.mean(train_running_accuracy)
-        results["train_accuracy"].append(train_accuracy)
+
+        if is_regression == False:
+            train_accuracy = np.mean(train_running_accuracy)
+            results["train_accuracy"].append(train_accuracy)
 
         val_dataloader = DataLoader(
             val_dataset,
@@ -84,24 +93,29 @@ def train(
             for _, (x, y_true) in enumerate(val_dataloader):
                 x = x.to(device)
                 y_true = y_true.to(device)
-                y_pred, _ = model(x.float())
+                y_pred, _ = model(x)
                 y_true = y_true.reshape((-1, 1))
 
-                val_loss = criterion(y_pred, y_true.float())
+                val_loss = criterion(y_pred, y_true)
                 val_running_loss.append(val_loss.item())
 
-                pred = np.round(y_pred.tolist())
-                target = np.round(y_true.tolist())
-                accuracy = accuracy_score(target, pred)
-                val_running_accuracy.append(accuracy)
+                if is_regression == False:
+                    pred = np.round(y_pred.tolist())
+                    target = np.round(y_true.tolist())
+                    accuracy = accuracy_score(target, pred)
+                    val_running_accuracy.append(accuracy)
         
         val_loss = np.mean(val_running_loss)
         results["val_loss"].append(val_loss)
-        val_accuracy = np.mean(val_running_accuracy)
-        results["val_accuracy"].append(val_accuracy)
-        print({ 'epoch': epoch, 'train_loss': train_loss, 'val_loss': val_loss, 'train_accuracy': train_accuracy, 'val_accuracy': val_accuracy })
 
-        if np.round(val_loss, 4) >= np.round(last_loss, 4):
+        if is_regression == False:
+            val_accuracy = np.mean(val_running_accuracy)
+            results["val_accuracy"].append(val_accuracy)
+            print({ 'epoch': epoch, 'train_loss': train_loss, 'val_loss': val_loss, 'train_accuracy': train_accuracy, 'val_accuracy': val_accuracy })
+        else:
+            print({ 'epoch': epoch, 'train_loss': train_loss, 'val_loss': val_loss })
+
+        if np.round(val_loss, 3) >= np.round(last_loss, 3):
             trigger_times += 1
             print('trigger times:', trigger_times)
 

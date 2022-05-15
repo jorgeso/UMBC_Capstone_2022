@@ -17,7 +17,8 @@ class NewsDataset(torch.utils.data.Dataset):
         self,
         model_name="bert-base-cased",
         split='train',
-        prefix=''
+        prefix='',
+        is_regression=False
     ):
         self._device = "cuda:0" if torch.cuda.is_available() else "cpu"
         # self._config = BertConfig.from_pretrained(model_name)
@@ -27,15 +28,19 @@ class NewsDataset(torch.utils.data.Dataset):
         self._bert_model = SentenceTransformer('all-mpnet-base-v2')
         current_dir = pathlib.Path(__file__).parent.resolve()
         self._data_df = pd.read_csv(f"{current_dir}/../data/{prefix}{split}_data.csv", index_col=0)
+        self._is_regression = is_regression
 
     def __len__(self):
         return len(self._data_df.index)
 
     def __getitem__(self, index):
         row = self._data_df.iloc[index]
-        label = row[-1]
-        text_series = row[:-1]
-        day_text_matrix = np.zeros((text_series.size, 768))
+        if self._is_regression:
+            label = np.float32(row[-1])
+        else:
+            label = np.float32(row[-2])
+        text_series = row[:-3]
+        day_text_matrix = np.zeros((text_series.size, 768), dtype="float32")
         # self._bert_model = self._bert_model.to(self._device)
         for index, text in enumerate(text_series):
             if isinstance(text, str):
@@ -48,8 +53,8 @@ class NewsDataset(torch.utils.data.Dataset):
                 # day_text_matrix[index, :] = mean_vector
                 sentences = [text]
                 sentence_embeddings = self._bert_model.encode(sentences)
-                day_text_matrix[index, :] = sentence_embeddings[0]
+                day_text_matrix[index, :] = np.float32(sentence_embeddings[0])
         return (
-            torch.tensor(day_text_matrix),
-            torch.tensor(label)
+            torch.tensor(day_text_matrix, dtype=torch.float32),
+            torch.tensor(label, dtype=torch.float32)
         )

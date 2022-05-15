@@ -1,5 +1,10 @@
-import argparse
 import torch
+torch.manual_seed(42)
+import random
+random.seed(42)
+import numpy as np
+np.random.seed(42)
+import argparse
 from scripts.datasets import NewsDataset
 from scripts.model import Model
 from scripts.training import train
@@ -7,20 +12,20 @@ import seaborn as sns
 import pandas as pd
 import matplotlib.pyplot as plt
 import pathlib
-import torch
  
 if __name__ == '__main__':
  
     # Initialize parser
     parser = argparse.ArgumentParser()
-    parser.add_argument("-P", "--plot", type=str, default="plot", help="name of plot file")
+    parser.add_argument("-P", "--plot", type=str, default="plot", help="name of plot file without extension or path")
     parser.add_argument("-A", "--attention", type=bool, default="False", help="true or false to add attention layer")
     parser.add_argument("-B", "--batch", type=int, default=32, help="batch size")
     parser.add_argument("-E", "--epochs", type=int, default=75, help="max number of epochs")
     parser.add_argument("-H", "--hidden_size", type=int, default=384, help="LSTM layer output size")
     parser.add_argument("-D", "--dropout", type=float, default=0.7, help="dropout rate")
-    parser.add_argument("-R", "--prefix", type=str, default='', help="prefix in data file names")
+    parser.add_argument("-F", "--prefix", type=str, default='', help="prefix in data file names")
     parser.add_argument("-L", "--lstm_layers", type=int, default=1, help="number of lstm layers")
+    parser.add_argument("-R", "--regression", type=bool, default=False, help="true if this is a regression problem")
     
     # Read arguments from command line
     args = parser.parse_args()
@@ -32,9 +37,10 @@ if __name__ == '__main__':
     plot_file_name = args.plot
     prefix = args.prefix
     lstm_layers = args.lstm_layers
+    is_regression = args.regression
 
-    train_dataset = NewsDataset(prefix=prefix)
-    val_dataset = NewsDataset(split='val', prefix=prefix)
+    train_dataset = NewsDataset(prefix=prefix, is_regression=is_regression)
+    val_dataset = NewsDataset(split='val', prefix=prefix, is_regression=is_regression)
     device = "cuda:0" if torch.cuda.is_available() else "cpu"
     model = Model(
         device,
@@ -49,13 +55,16 @@ if __name__ == '__main__':
         model,
         device,
         batch_size=batch_size,
-        max_epochs=max_epochs
+        max_epochs=max_epochs,
+        is_regression=is_regression
     )
     if device == "cuda:0":
         torch.cuda.empty_cache()
 
     results_df = pd.DataFrame(results)
-    results_df = results_df.drop(columns=["train_loss"])
+
+    if is_regression == False:
+        results_df = results_df.drop(columns=["train_loss", "val_loss"])
     sns.lineplot(x="epoch", y="value", hue="variable", data=pd.melt(results_df, ["epoch"]))
     current_dir = pathlib.Path(__file__).parent.resolve()
     plt.savefig(f'{current_dir}/../plots/{plot_file_name}.png', dpi=300)

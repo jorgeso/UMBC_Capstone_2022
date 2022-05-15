@@ -18,23 +18,6 @@ class Model(nn.Module):
         else:
             self.dropout = 0
 
-        self.attn = nn.Sequential()
-
-        for _ in range(attn_layers):
-            self.attn.append(
-                nn.Linear(self.lstm_size, self.lstm_size)
-            )
-            self.attn.append(
-                nn.ReLU()
-            )
-
-        self.attn.append(
-            nn.Linear(self.lstm_size, 1)
-        )
-        self.attn.append(
-            nn.Softmax(1)
-        )
-
         # self.lin_0 = nn.Linear(self.lstm_size, (self.lstm_size//4)*3)
         # self.non_lin_1 = nn.ReLU()
         # self.lin_1 = nn.Linear((self.lstm_size//4)*3, self.lstm_size//2)
@@ -51,20 +34,37 @@ class Model(nn.Module):
             batch_first=True
         )
 
-        self.out_lin = nn.Sequential()
+        self.attn = nn.Sequential()
+
+        for _ in range(attn_layers):
+            self.attn.append(
+                nn.Linear(self.hidden_size, self.hidden_size)
+            )
+            self.attn.append(
+                nn.ReLU()
+            )
+
+        self.attn.append(
+            nn.Linear(self.hidden_size, 1)
+        )
+        self.attn.append(
+            nn.Softmax(1)
+        )
+
+        self.decoder = nn.Sequential()
 
         for _ in range(out_layers):
 
-            self.out_lin.append(
+            self.decoder.append(
                 nn.Linear(self.hidden_size, self.hidden_size)
             )
-            self.out_lin.append(
+            self.decoder.append(
                 nn.ReLU()
             )
-        self.out_lin.append(
+        self.decoder.append(
             nn.Linear(hidden_size, 1)
         )
-        self.out_lin.append(
+        self.decoder.append(
             nn.Tanh()
         )
 
@@ -85,11 +85,14 @@ class Model(nn.Module):
         # weights = self.non_lin_3(weights)
         # weights = self.lin_3(weights)
         # weights_normalized = torch.softmax(weights, 1)
-        weights = self.attn(x)
-        lstm_input = torch.mul(weights, x)
-        h0, c0 = self.init_hidden(lstm_input.size(0))
-        output, state = self.lstm(lstm_input, (h0, c0))
-        output = self.out_lin(output[:, -1, :])
+        h0, c0 = self.init_hidden(x.size(0))
+        output, state = self.lstm(x, (h0, c0))
+
+        weights = self.attn(output)
+        decoder_input = torch.mul(weights, output)
+        decoder_input = torch.sum(decoder_input, dim=1)
+
+        output = self.decoder(decoder_input)
         # output = self.fc_0(output[:, -1, :])
         # output = self.non_lin_4(output)
         # output = self.fc_1(output)

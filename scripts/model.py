@@ -7,7 +7,16 @@ np.random.seed(42)
 from torch import nn
 
 class Model(nn.Module):
-    def __init__(self, device, attn_layers=5, lstm_layers=1, hidden_size=384, dropout=0.7, out_layers=5):
+    def __init__(
+        self, device,
+        attn_layers=5,
+        lstm_layers=1,
+        hidden_size=384,
+        dropout=0.7,
+        attn_dropout=0.7,
+        decoder_dropout=0.7,
+        out_layers=5
+    ):
         super(Model, self).__init__()
         self.lstm_size = 768
         self.num_layers = lstm_layers
@@ -18,7 +27,7 @@ class Model(nn.Module):
         else:
             self.dropout = 0
 
-        self.attn = nn.Sequential()
+        self.attn = nn.Sequential(dropout=attn_dropout)
 
         for _ in range(attn_layers):
             self.attn.append(
@@ -51,7 +60,7 @@ class Model(nn.Module):
             batch_first=True
         )
 
-        self.out_lin = nn.Sequential()
+        self.out_lin = nn.Sequential(dropout=decoder_dropout)
 
         for _ in range(out_layers):
 

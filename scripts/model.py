@@ -1,4 +1,3 @@
-from tkinter import SEL_LAST
 import torch
 torch.manual_seed(42)
 import random

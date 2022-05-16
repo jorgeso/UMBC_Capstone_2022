@@ -12,9 +12,9 @@ class Model(nn.Module):
         attn_layers=5,
         lstm_layers=1,
         hidden_size=384,
-        dropout=0.7,
-        attn_dropout=0.7,
-        decoder_dropout=0.7,
+        dropout=0.3,
+        attn_dropout=0.3,
+        decoder_dropout=0.3,
         out_layers=5
     ):
         super(Model, self).__init__()
@@ -43,11 +43,14 @@ class Model(nn.Module):
             batch_first=True
         )
 
-        self.attn = nn.Sequential(dropout=attn_dropout)
+        self.attn = nn.Sequential()
 
         for _ in range(attn_layers):
             self.attn.append(
                 nn.Linear(self.hidden_size, self.hidden_size)
+            )
+            self.attn.append(
+                nn.Dropout(attn_dropout)
             )
             self.attn.append(
                 nn.ReLU()
@@ -60,12 +63,15 @@ class Model(nn.Module):
             nn.Softmax(1)
         )
 
-        self.decoder = nn.Sequential(dropout=decoder_dropout)
+        self.decoder = nn.Sequential()
 
         for _ in range(out_layers):
 
             self.decoder.append(
                 nn.Linear(self.hidden_size, self.hidden_size)
+            )
+            self.decoder.append(
+                nn.Dropout(decoder_dropout)
             )
             self.decoder.append(
                 nn.ReLU()

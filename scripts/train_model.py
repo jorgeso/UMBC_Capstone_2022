@@ -46,7 +46,8 @@ if __name__ == '__main__':
         device,
         lstm_layers=lstm_layers,
         hidden_size=hidden_size,
-        dropout=dropout
+        dropout=dropout,
+        is_regression=is_regression
     )
 
     results = train(

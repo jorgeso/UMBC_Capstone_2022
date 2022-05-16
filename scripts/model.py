@@ -15,7 +15,8 @@ class Model(nn.Module):
         dropout=0.3,
         attn_dropout=0.3,
         decoder_dropout=0.3,
-        out_layers=5
+        out_layers=5,
+        is_regression=False
     ):
         super(Model, self).__init__()
         self.lstm_size = 768
@@ -26,14 +27,6 @@ class Model(nn.Module):
             self.dropout = dropout
         else:
             self.dropout = 0
-
-        # self.lin_0 = nn.Linear(self.lstm_size, (self.lstm_size//4)*3)
-        # self.non_lin_1 = nn.ReLU()
-        # self.lin_1 = nn.Linear((self.lstm_size//4)*3, self.lstm_size//2)
-        # self.non_lin_2 = nn.ReLU()
-        # self.lin_2 = nn.Linear(self.lstm_size//2, self.lstm_size//4)
-        # self.non_lin_3 = nn.ReLU()
-        # self.lin_3 = nn.Linear(self.lstm_size//4, 1)
 
         self.lstm = nn.LSTM(
             input_size=self.lstm_size,
@@ -79,27 +72,17 @@ class Model(nn.Module):
         self.decoder.append(
             nn.Linear(hidden_size, 1)
         )
-        self.decoder.append(
-            nn.Tanh()
-        )
 
-        # self.fc_0 = nn.Linear(self.hidden_size, (self.hidden_size//4)*3)
-        # self.non_lin_4 = nn.ReLU()
-        # self.fc_1 = nn.Linear((self.hidden_size//4)*3, self.hidden_size//2)
-        # self.non_lin_5 = nn.ReLU()
-        # self.fc_2 = nn.Linear(self.hidden_size//2, self.hidden_size//4)
-        # self.non_lin_6 = nn.ReLU()
-        # self.fc_3 = nn.Linear(self.hidden_size//4, 1)
+        if is_regression:
+            self.decoder.append(
+                nn.Tanh()
+            )
+        else:
+            self.decoder.append(
+                nn.Sigmoid()
+            )
 
     def forward(self, x):
-        # weights = self.lin_0(x)
-        # weights = self.non_lin_1(weights)
-        # weights = self.lin_1(weights)
-        # weights = self.non_lin_2(weights)
-        # weights = self.lin_2(weights)
-        # weights = self.non_lin_3(weights)
-        # weights = self.lin_3(weights)
-        # weights_normalized = torch.softmax(weights, 1)
         h0, c0 = self.init_hidden(x.size(0))
         output, state = self.lstm(x, (h0, c0))
 
@@ -108,14 +91,7 @@ class Model(nn.Module):
         decoder_input = torch.sum(decoder_input, dim=1)
 
         output = self.decoder(decoder_input)
-        # output = self.fc_0(output[:, -1, :])
-        # output = self.non_lin_4(output)
-        # output = self.fc_1(output)
-        # output = self.non_lin_5(output)
-        # output = self.fc_2(output)
-        # output = self.non_lin_6(output)
-        # output = self.fc_3(output)
-        # output = torch.tanh(output)
+
         return output, state
 
     def init_hidden(self, sequence_length):
